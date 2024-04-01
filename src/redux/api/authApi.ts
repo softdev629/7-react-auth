@@ -1,25 +1,24 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { LoginInput } from "../../pages/login.page";
 import { RegisterInput } from "../../pages/register.page";
-import { IGenericResponse } from "./types";
+import customFetchBase from "./customFetchBase";
+import { IGenericResponse, IUser } from "./types";
 import { userApi } from "./userApi";
-
-const BASE_URL = process.env.REACT_APP_SERVER_ENDPOINT as string;
 
 export const authApi = createApi({
   reducerPath: "authApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${BASE_URL}/api/auth/`,
-  }),
+  baseQuery: customFetchBase,
   endpoints: (builder) => ({
-    registerUser: builder.mutation<IGenericResponse, RegisterInput>({
+    registerUser: builder.mutation<IUser, RegisterInput>({
       query(data) {
         return {
-          url: "register",
+          url: "auth/register",
           method: "POST",
           body: data,
         };
       },
+      transformResponse: (result: { data: { user: IUser } }) =>
+        result.data.user,
     }),
     loginUser: builder.mutation<
       { access_token: string; status: string },
@@ -27,7 +26,7 @@ export const authApi = createApi({
     >({
       query(data) {
         return {
-          url: "login",
+          url: "auth/login",
           method: "POST",
           body: data,
           credentials: "include",
@@ -40,22 +39,21 @@ export const authApi = createApi({
         } catch (error) {}
       },
     }),
+    logoutUser: builder.mutation<void, void>({
+      query() {
+        return {
+          url: "auth/logout",
+          credentials: "include",
+        };
+      },
+    }),
     verifyEmail: builder.mutation<
       IGenericResponse,
       { verificationCode: string }
     >({
-      query({ verificationCode }) {
-        return {
-          url: `verifyemail/${verificationCode}`,
-          method: "GET",
-        };
-      },
-    }),
-    logoutUser: builder.mutation<void, void>({
       query() {
         return {
-          url: "logout",
-          credentials: "include",
+          url: "auth/verify",
         };
       },
     }),
